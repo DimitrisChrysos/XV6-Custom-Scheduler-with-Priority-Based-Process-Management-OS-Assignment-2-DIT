@@ -5,10 +5,10 @@
 #define SMALL_TIME 122212325
 
 // Comment out to use setpriority syscall
-int setpriority(int num)
-{
-  return -1;
-}
+// int setpriority(int num)
+// {
+//   return -1;
+// }
 
 uint64 useless_calc(uint64 z, uint64 time)
 {

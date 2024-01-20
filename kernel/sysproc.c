@@ -89,3 +89,32 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+
+// return the amount of free memory (in bytes)
+uint64
+sys_freemem(void)
+{
+  return calc_freemem();
+}
+
+// return 0, if successful priority set and -1, if not
+uint64
+sys_setpriority(void)
+{
+  int num;
+  argint(0, &num);
+  return set_priority(num);
+}
+
+// return 0, if successful info copy and -1, if not
+uint64
+sys_getpinfo(void)
+{
+  struct pstat info;
+  argaddr(0, (uint64*)&info);
+  get_pinfo(&info);
+  struct proc *p = myproc();
+  uint64 info_addr;
+  argaddr(0, &info_addr);
+  return copyout(p->pagetable, info_addr, (char*)&info, sizeof(info));
+}

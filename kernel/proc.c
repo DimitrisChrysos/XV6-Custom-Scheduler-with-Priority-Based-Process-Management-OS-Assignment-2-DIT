@@ -125,6 +125,9 @@ found:
   p->pid = allocpid();
   p->state = USED;
 
+  // Priority initialization
+  p->priority = 10;
+
   // Allocate a trapframe page.
   if((p->trapframe = (struct trapframe *)kalloc()) == 0){
     freeproc(p);
@@ -451,20 +454,39 @@ scheduler(void)
   for(;;){
     // Avoid deadlock by ensuring that devices can interrupt.
     intr_on();
-
+    
+    // Find "RUNNABLE" processes and save the last one with the highest priority (min number)
+    int min_priority = 100;                 // Available priority values are: (1,2,...,20)
+    struct proc* p_selected = &proc[0];     // The process we select to run later
     for(p = proc; p < &proc[NPROC]; p++) {
       acquire(&p->lock);
-      if(p->state == RUNNABLE) {
-        // Switch to chosen process.  It is the process's job
-        // to release its lock and then reacquire it
-        // before jumping back to us.
-        p->state = RUNNING;
-        c->proc = p;
-        swtch(&c->context, &p->context);
+      if(p->state == RUNNABLE && (p->priority >=1 && p->priority <= 20)) {
+        if(p->priority <= min_priority) {
+          p_selected = p;
+          min_priority = p->priority;
+        }
+      }
+      release(&p->lock);
+    }
 
-        // Process is done running for now.
-        // It should have changed its p->state before coming back.
-        c->proc = 0;
+    // Run all the "RUNNABLE" processes with the same priority as the one we saved before
+    // (starting from the saved process)
+    int prio = min_priority;
+    for(p = p_selected; p >= proc; p--) {
+      acquire(&p->lock);
+      if (p->priority == prio) {
+        if(p->state == RUNNABLE && (p->priority >=1 && p->priority <= 20)) {
+          // Switch to chosen process.  It is the process's job
+          // to release its lock and then reacquire it
+          // before jumping back to us.
+          p->state = RUNNING;
+          c->proc = p;
+          swtch(&c->context, &p->context);
+
+          // Process is done running for now.
+          // It should have changed its p->state before coming back.
+          c->proc = 0;
+        }
       }
       release(&p->lock);
     }
@@ -680,4 +702,46 @@ procdump(void)
     printf("%d %s %s", p->pid, state, p->name);
     printf("\n");
   }
+}
+
+// Sets the priority of the current process equal to "num"
+// Valid values for num are: (1,2,...,20)
+// Return 0, if successful and -1 if not
+int
+set_priority(int num)
+{
+  if (num >= 1 && num <= 20) {
+
+    struct proc* p = myproc();
+    acquire(&p->lock);
+    myproc()->priority = num;
+    release(&p->lock);
+    return 0;
+  }
+  else
+    return -1;
+}
+
+// Copy info from every active process to pstat
+int
+get_pinfo(struct pstat * stat)
+{
+  struct proc* p;
+  for (p = proc ; p < &proc[NPROC] ; p++) {
+    acquire(&p->lock);
+    if (p->state >= 1 && p->state <= 5) {
+      stat->pid[p->pid - 1] = p->pid;
+      if (p->pid == 1)
+        stat->ppid[p->pid - 1] = p->pid;
+      else
+        stat->ppid[p->pid - 1] = p->parent->pid;
+      int len = strlen(p->name);
+      strncpy(stat->name[p->pid - 1], p->name, len + 1);
+      stat->priority[p->pid - 1] = p->priority;
+      stat->state[p->pid - 1] = p->state;
+      stat->sz[p->pid - 1] = p->sz;
+    }
+    release(&p->lock);
+  }
+  return 0;
 }
