@@ -41,8 +41,6 @@ usertests
 Exit qemu: Ctrl-A and X.
 ```
 
-Use `ps` and custom test programs to verify functionality.
-
 ## Author
 
 Δημήτριος Χρυσός
