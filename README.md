@@ -33,12 +33,12 @@ The project passes all test cases in:
 
 ## Compilation and Running
 
-Follow your course-specific XV6 build instructions. Typically:
-
 ```bash
-make clean
-make
-make qemu
+make qemu / make CPUS=1 qemu
+ps
+priotest
+usertests
+Exit qemu: Ctrl-A and X.
 ```
 
 Use `ps` and custom test programs to verify functionality.
