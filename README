@@ -1,3 +1,57 @@
+# Custom Priority Scheduler in XV6
+
+This project extends the XV6 operating system by implementing a priority-based scheduler, along with two new system calls: `setpriority()` and `getpinfo()`. It allows processes to be prioritized and schedules them accordingly, enhancing process control and observability.
+
+## Overview
+
+### New System Calls
+
+- `int setpriority(int num)`:  
+  Sets the priority of the current process. Implemented in `proc.c` and `sysproc.c`.
+
+- `int getpinfo(struct pstat *)`:  
+  Retrieves scheduling and priority information for all processes. Uses a custom `struct pstat` defined in `types.h`.
+
+### Kernel Modifications
+
+- Added `int priority` field in `struct proc`, initialized to 10 in `allocproc()`.
+- Modified the scheduler in `proc.c` to:
+  - Locate the last `RUNNABLE` process with the highest priority (smallest value).
+  - Run all `RUNNABLE` processes matching that priority level in reverse order.
+
+### Additional Tools
+
+- `ps.c`: Mimics Unix `ps` by displaying process state and priority.
+  - Uses `print_enum2string()` to format `enum procstate`.
+  - Relies on updated `types.h` that includes `pstat` and `procstate`.
+
+## Testing
+
+The project passes all test cases in:
+- `usertests` (with default and single CPU)
+- `priotest` (with default and single CPU)
+
+## Compilation and Running
+
+Follow your course-specific XV6 build instructions. Typically:
+
+```bash
+make clean
+make
+make qemu
+```
+
+Use `ps` and custom test programs to verify functionality.
+
+## Author
+
+Δημήτριος Χρυσός
+
+---
+
+This project was created as part of an operating systems assignment, focusing on kernel development and scheduler customization.
+
+# For xv6
 xv6 is a re-implementation of Dennis Ritchie's and Ken Thompson's Unix
 Version 6 (v6).  xv6 loosely follows the structure and style of v6,
 but is implemented for a modern RISC-V multiprocessor using ANSI C.
